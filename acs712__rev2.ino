@@ -2,8 +2,8 @@
 const byte  inputPin = A0;             // sensor input
 const float sensitivity = 0.185;    // for 5Amps version,for 20 and 30 Amps check datasheet
 
-int calButton = 3;
-int buttonState;
+int calButton = 3;    //button to calibrate the value to "zero" when no current is flowing
+int buttonState;   //read the state of calibrate button
 float sensorOut = 0.0;
 float calvalue = 0.0;
 
@@ -16,7 +16,7 @@ void setup() {
   lcd.init();          // initialize the lcd 
   lcd.backlight();     //always turn on the backlight of LDC module
   Serial.begin(9600);  
-  pinMode (calButton, INPUT_PULLUP);
+  pinMode (calButton, INPUT_PULLUP);  
 }
 
 void loop() {
@@ -24,12 +24,12 @@ void loop() {
   // read sensor current and display on serial monitor
   measureCurrent();
 
-  buttonState = digitalRead (calButton);
-  if (buttonState == LOW)  {
-     calvalue = calibrationFactor();
+  buttonState = digitalRead (calButton);  //check the state of the button
+  if (buttonState == LOW)  {              // button pushed then run calibration code
+     calvalue = calibrationFactor();      // put the calibration factor in calValue
      delay(100);
 
-      buttonState = HIGH;
+      buttonState = HIGH;           // before leaving this loop, turn the state of calibrate button HIGH
   }
   delay(100);
 }
@@ -50,9 +50,11 @@ int32_t measureCurrent() {
   sensorValue = (sensorValue / 100);
   Vcc = Vcc / 100;
 
-  float sensorOut = ((Vcc / 1023) * sensorValue);
-  int32_t currentmA = ((sensorOut - calvalue ) / sensitivity );
-/*
+  float sensorOut = ((Vcc / 1023) * sensorValue);   //analog voltage that appears on AO
+  int32_t currentmA = ((sensorOut - calvalue) / sensitivity );  //math to convert analog voltage to current (in miliamps)
+/*  
+  // for debugging
+  
   Serial.print("sensor Value ");
   Serial.println(sensorValue);
   Serial.print("Vcc ");
@@ -65,9 +67,12 @@ int32_t measureCurrent() {
   Serial.println(currentmA);
   
   Serial.println("  ");
- */ 
+
   //Serial.print("current value ");
   //Serial.println(calvalue);
+  */
+
+  //print values on lcd
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("    Current:    ");
@@ -79,6 +84,7 @@ int32_t measureCurrent() {
   return (currentmA);
 }
 
+//calculate the calibraation factor by doing same math as calculating analog pin volatge above
 float calibrationFactor() {
 
   int32_t sensorValue1 = 0;
@@ -95,6 +101,7 @@ float calibrationFactor() {
   return (sensorOut1); 
 }
 
+//copied from internet
 // ---------------------------------------------------
 // calculate Vcc in mV from the 1.1V reference voltage
 // ---------------------------------------------------
